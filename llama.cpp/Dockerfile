@@ -24,10 +24,10 @@ RUN set -xe \
 # Build binaries
 WORKDIR /app/llama.cpp
 RUN set -xe \
- && mkdir build && cd build \
- && cmake .. -DGGML_RPC=ON \
- && make -j$(nproc) llama-server llama-cli llama-embedding rpc-server
+ && cmake -B build -DGGML_RPC=ON \
+ && cmake --build build --config Release
 
+RUN ls -la ggml/src/ggml-rpc
 
 
 FROM ubuntu:22.04
@@ -44,8 +44,9 @@ RUN set -xe \
  && mkdir -pv /app/models
 
 # Copy compiled tools
-COPY --from=builder /app/llama.cpp/build/src/libllama.so /usr/lib/x86_64-linux-gnu
-COPY --from=builder /app/llama.cpp/build/ggml/src/libggml.so /usr/lib/x86_64-linux-gnu
+COPY --from=builder /app/llama.cpp/build/src/*.so /usr/lib/x86_64-linux-gnu
+COPY --from=builder /app/llama.cpp/build/ggml/src/*.so /usr/lib/x86_64-linux-gnu
+COPY --from=builder /app/llama.cpp/build/ggml/src/ggml-rpc/*.so /usr/lib/x86_64-linux-gnu
 COPY --from=builder /app/llama.cpp/build/bin/rpc-server .
 COPY --from=builder /app/llama.cpp/build/bin/llama-cli .
 COPY --from=builder /app/llama.cpp/build/bin/llama-embedding .

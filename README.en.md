@@ -1,11 +1,11 @@
 # llama.cpp RPC-server in Docker
 
+[Русский](./README.md) | [中文](./README.zh.md) | **English**
+
 This project is based on [llama.cpp](https://github.com/ggerganov/llama.cpp) and compiles only
 the [RPC](https://github.com/ggerganov/llama.cpp/tree/master/examples/rpc) server, along with auxiliary utilities
 operating in RPC client mode, which are necessary for implementing distributed inference of Large Language Models (LLMs)
 and Embedding Models converted into the GGUF format.
-
-[Русский](./README.md) | [中文](./README.zh.md) | **English**
 
 ## Overview
 

@@ -1,13 +1,13 @@
 # llama.cpp RPC-server in Docker
 
+**Русский** | [中文](./README.zh.md) | [English](./README.en.md)
+
 Данный проект основан на [llama.cpp](https://github.com/ggerganov/llama.cpp) и компилирует
 только [RPC](https://github.com/ggerganov/llama.cpp/tree/master/examples/rpc)-сервер, а так же
 вспомогательные утилиты, работающие в режиме RPC-клиента, необходимые для реализации распределённого инференса
 конвертированных в GGUF формат Больших Языковых Моделей (БЯМ) и Эмбеддинговых Моделей.
 
 Образы [evilfreelancer/llama.cpp-rpc](https://hub.docker.com/repository/docker/evilfreelancer/llama.cpp-rpc/general) на Docker Hub.
-
-**Русский** | [中文](./README.zh.md) | [English](./README.en.md)
 
 ## Обзор
 

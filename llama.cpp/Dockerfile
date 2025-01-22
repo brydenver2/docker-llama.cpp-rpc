@@ -25,7 +25,7 @@ RUN set -xe \
 WORKDIR /app/llama.cpp
 RUN set -xe \
  && cmake -B build -DGGML_RPC=ON \
- && cmake --build build --config Release
+ && cmake --build build --config Release -j$(nproc)
 
 RUN ls -la ggml/src/ggml-rpc
 

@@ -36,7 +36,7 @@ RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/lib
 RUN set -xe \
  && export LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs/:$LD_LIBRARY_PATH \
  && cmake -B build -DGGML_CUDA=ON -DGGML_RPC=ON \
- && cmake --build build --config Release
+ && cmake --build build --config Release -j$(nproc)
 
 
 FROM ${BASE_CUDA_RUNTIME_CONTAINER}

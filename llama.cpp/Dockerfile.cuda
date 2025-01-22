@@ -56,6 +56,7 @@ RUN set -xe \
 COPY --from=builder /app/llama.cpp/build/src/*.so /usr/lib/x86_64-linux-gnu
 COPY --from=builder /app/llama.cpp/build/ggml/src/*.so /usr/lib/x86_64-linux-gnu
 COPY --from=builder /app/llama.cpp/build/ggml/src/ggml-rpc/*.so /usr/lib/x86_64-linux-gnu
+COPY --from=builder /app/llama.cpp/build/ggml/src/ggml-cuda/*.so /usr/lib/x86_64-linux-gnu
 COPY --from=builder /app/llama.cpp/build/bin/rpc-server .
 COPY --from=builder /app/llama.cpp/build/bin/llama-cli .
 COPY --from=builder /app/llama.cpp/build/bin/llama-embedding .

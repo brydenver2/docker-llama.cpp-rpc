@@ -7,7 +7,7 @@
 вспомогательные утилиты, работающие в режиме RPC-клиента, необходимые для реализации распределённого инференса
 конвертированных в GGUF формат Больших Языковых Моделей (БЯМ) и Эмбеддинговых Моделей.
 
-Образы [evilfreelancer/llama.cpp-rpc](https://hub.docker.com/repository/docker/evilfreelancer/llama.cpp-rpc/general) на Docker Hub.
+Образы [evilfreelancer/llama.cpp-rpc](https://hub.docker.com/r/evilfreelancer/llama.cpp-rpc) на Docker Hub.
 
 ## Обзор
 

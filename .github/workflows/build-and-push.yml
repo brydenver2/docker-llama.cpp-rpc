@@ -29,7 +29,7 @@ jobs:
         id: github_releases
         run: |
           url="https://api.github.com/repos/${owner}/${repo}/releases"
-          result=$(curl -s "$url" | jq '.[]["name"]' | grep '^b*')
+          result=$(curl -L -s "$url" | jq '.[]["name"]' | grep '^b*')
           sorted_result=$(echo "$result" | sed 's/\"//g' | sort -V | tail -n 2 | tr '\n' ',')
           echo "::set-output name=result::$sorted_result"
         env:

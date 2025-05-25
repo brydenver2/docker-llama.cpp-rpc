@@ -125,7 +125,7 @@ docker build ./llama.cpp/ --file ./llama.cpp/Dockerfile.cuda
 
 ```shell
 # Собрать контейнер из тега https://github.com/ggerganov/llama.cpp/releases/tag/b3700
-docker build ./llama.cpp/ --build-arg LLAMACPP_VERSION=b3700
+docker build ./llama.cpp/ --build-arg LLAMACPP_VERSION=b5480
 ```
 
 ```shell
@@ -149,7 +149,7 @@ services:
     build:
       context: ./llama.cpp
       args:
-        - LLAMACPP_VERSION=b3700
+        - LLAMACPP_VERSION=b5480
     volumes:
       - ./models:/app/models
     environment:
@@ -162,7 +162,7 @@ services:
     build:
       context: ./llama.cpp
       args:
-        - LLAMACPP_VERSION=b3700
+        - LLAMACPP_VERSION=b5480
     environment:
       APP_MODE: backend
     ports:

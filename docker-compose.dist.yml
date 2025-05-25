@@ -24,7 +24,7 @@ services:
     #build:
     #  context: ./llama.cpp
     #  args:
-    #    - LLAMACPP_VERSION=b3700
+    #    - LLAMACPP_VERSION=b5480
     volumes:
       - ./models:/app/models
     environment:
@@ -44,7 +44,7 @@ services:
     #build:
     #  context: ./llama.cpp
     #  args:
-    #    - LLAMACPP_VERSION=b3700
+    #    - LLAMACPP_VERSION=b5480
     environment:
       # Режим работы (RPC-сервер)
       APP_MODE: backend
@@ -61,7 +61,7 @@ services:
     #  context: ./llama.cpp
     #  dockerfile: Dockerfile.cuda
     #  args:
-    #    - LLAMACPP_VERSION=b3700
+    #    - LLAMACPP_VERSION=b5480
     environment:
       # Режим работы (RPC-сервер)
       APP_MODE: backend

@@ -19,6 +19,7 @@ fi
 [ "x$APP_THREADS" = "x" ] && export APP_THREADS="16"
 [ "x$APP_DEVICE" = "x" ] && unset APP_DEVICE
 [ "x$APP_CACHE" = "x" ] && export APP_CACHE="false"
+[ "x$APP_EMBEDDING" = "x" ] && export APP_EMBEDDING="false"
 
 # Construct the command with the options
 if [ "$APP_MODE" = "backend" ]; then
@@ -41,6 +42,7 @@ elif [ "$APP_MODE" = "server" ]; then
     CMD+=" --repeat-penalty $APP_REPEAT_PENALTY"
     CMD+=" --rpc $APP_RPC_BACKENDS"
     CMD+=" --gpu-layers $APP_GPU_LAYERS"
+    [ "$APP_EMBEDDING" = "true" ] && CMD+=" --embedding"
 elif [ "$APP_MODE" = "none" ]; then
     # For cases when you want to use /app/llama-cli
     echo "APP_MODE is set to none. Sleeping indefinitely."

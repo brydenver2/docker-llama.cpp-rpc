@@ -34,7 +34,7 @@ WORKDIR /app
 # Install basic dependencies
 RUN set -xe \
  && apt update -q \
- && apt install -fyq libgomp1 \
+ && apt install -fyq libgomp1 curl \
  && apt clean
 
 # Create folders

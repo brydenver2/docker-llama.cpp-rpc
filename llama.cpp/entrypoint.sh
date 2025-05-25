@@ -12,7 +12,6 @@ fi
 [ "x$APP_MODE" = "x" ] && export APP_MODE="backend"
 [ "x$APP_BIND" = "x" ] && export APP_BIND="0.0.0.0"
 [ "x$APP_MEM" = "x" ] && export APP_MEM="1024"
-[ "x$APP_RPC" = "x" ] && export APP_RPC_BACKENDS="backend-cuda:50052,backend-cpu:50052"
 [ "x$APP_MODEL" = "x" ] && export APP_MODEL="/app/models/TinyLlama-1.1B-q4_0.gguf"
 [ "x$APP_REPEAT_PENALTY" = "x" ] && export APP_REPEAT_PENALTY="1.0"
 [ "x$APP_GPU_LAYERS" = "x" ] && export APP_GPU_LAYERS="99"
@@ -40,8 +39,8 @@ elif [ "$APP_MODE" = "server" ]; then
     CMD+=" --port $APP_PORT"
     CMD+=" --model $APP_MODEL"
     CMD+=" --repeat-penalty $APP_REPEAT_PENALTY"
-    CMD+=" --rpc $APP_RPC_BACKENDS"
     CMD+=" --gpu-layers $APP_GPU_LAYERS"
+    [ -n "$APP_RPC_BACKENDS" ] && CMD+=" --rpc $APP_RPC_BACKENDS"
     [ "$APP_EMBEDDING" = "true" ] && CMD+=" --embedding"
 elif [ "$APP_MODE" = "none" ]; then
     # For cases when you want to use /app/llama-cli

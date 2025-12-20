@@ -1,48 +1,56 @@
 # llama.cpp RPC-server in Docker
 
-**Русский** | [中文](./README.zh.md) | [English](./README.en.md)
+[Русский](./README.md) | [中文](./README.zh.md) | **English**
 
-Данный проект основан на [llama.cpp](https://github.com/ggerganov/llama.cpp) и компилирует
-только [RPC](https://github.com/ggerganov/llama.cpp/tree/master/examples/rpc)-сервер, а так же
-вспомогательные утилиты, работающие в режиме RPC-клиента, необходимые для реализации распределённого инференса
-конвертированных в GGUF формат Больших Языковых Моделей (БЯМ) и Эмбеддинговых Моделей.
+This is a fork of [EvilFreelancer/docker-llama.cpp-rpc](https://github.com/EvilFreelancer/docker-llama.cpp-rpc) with modifications to build against **OpenBLAS** instead of Intel MKL, resolving `libmtmd.so.0` runtime dependency issues.
 
-Образы [evilfreelancer/llama.cpp-rpc](https://hub.docker.com/r/evilfreelancer/llama.cpp-rpc) на Docker Hub.
+This project is based on [llama.cpp](https://github.com/ggerganov/llama.cpp) and compiles only
+the [RPC](https://github.com/ggerganov/llama.cpp/tree/master/examples/rpc) server, along with auxiliary utilities
+operating in RPC client mode, which are necessary for implementing distributed inference of Large Language Models (LLMs)
+and Embedding Models converted into the GGUF format.
 
-## Обзор
+## Changes from Upstream
 
-В общем виде схема приложения с использованием RPC-сервера имеет следующий вид:
+- **OpenBLAS Runtime**: Switched from Intel MKL to OpenBLAS (`libopenblas0`) to avoid missing library errors
+- **Build Script**: Added `build.sh` for automated builds with versioning from `version.txt`
+- **Local Registry**: Configured for deployment to `registry.local.wallacearizona.us`
+- **BLAS Support**: Enabled `-DGGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS` for improved CPU performance
+
+## Overview
+
+The general architecture of an application using the RPC server looks as follows:
 
 ![schema](./assets/schema.png)
 
-Вместо `llama-server` можно использовать `llama-cli` или `llama-embedding`, они идут в стандартной поставке контейнера.
+Instead of `llama-server`, you can use `llama-cli` or `llama-embedding`, which are included in the standard container
+package.
 
-Docker-образы собираются с поддержкой следующих архитектур:
+Docker images are built with support for the following architectures:
 
-- **CPU-only** - amd64
-- **CUDA** - amd64
+* **CPU-only** - amd64, arm64, arm/v7
+* **CUDA** - amd64
 
-К сожалению сборка под архитектуры arm64 и arm/v7 падает с ошибкой, поэтому они временно отключены.
+Unfortunately, CUDA builds for arm64 fail due to an error, so they are temporarily disabled.
 
-## Переменные окружения
+## Environment Variables
 
-| Имя                | Дефолт                                         | Описание                                                                                                       |
-|--------------------|------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| APP_MODE           | backend                                        | Режим работы контейнера, доступные варианты: `server`, `backend` и `none`                                      |
-| APP_BIND           | 0.0.0.0                                        | Интерфейс на который происходит биндинг                                                                        |
-| APP_PORT           | у `server` это `8080`, у `backend` это `50052` | Номер порта на котором запускается сервер                                                                      |
-| APP_MEM            | 1024                                           | Количество Мб оперативной памяти доступной клиенту, в режиме CUDA это количество оперативной памяти видеокарты | 
-| APP_RPC_BACKENDS   | backend-cuda:50052,backend-cpu:50052           | Разделённые запятой адреса бэкендов к которым будет пытаться подключиться контейнер в режиме `server`          |
-| APP_MODEL          | /app/models/TinyLlama-1.1B-q4_0.gguf           | Путь к весам модели внутри контейнера                                                                          | 
-| APP_REPEAT_PENALTY | 1.0                                            | Пенальти повторов                                                                                              |
-| APP_GPU_LAYERS     | 99                                             | Количество слоёв выгружаемых на бэкенд                                                                         |
+| Name               | Default                                    | Description                                                                                      |
+|--------------------|--------------------------------------------|--------------------------------------------------------------------------------------------------|
+| APP_MODE           | backend                                    | Container operation mode, available options: server, backend, and none                           |
+| APP_BIND           | 0.0.0.0                                    | Interface to bind to                                                                             |
+| APP_PORT           | `8080` for `server`, `50052` for `backend` | Port number on which the server is running                                                       |
+| APP_MEM            | 1024                                       | Amount of MiB of RAM available to the client; in CUDA mode, this is the amount of GPU memory     | 
+| APP_RPC_BACKENDS   | backend-cuda:50052,backend-cpu:50052       | Comma-separated addresses of backends that the container will try to connect to in `server` mode |
+| APP_MODEL          | /app/models/TinyLlama-1.1B-q4_0.gguf       | Path to the model weights inside the container                                                   | 
+| APP_REPEAT_PENALTY | 1.0                                        | Repeat penalty                                                                                   |
+| APP_GPU_LAYERS     | 99                                         | Number of layers offloaded to the backend                                                        |
 
-## Пример docker-compose.yml
+## Example of docker-compose.yml
 
-В данном примере происходит запуск `llama-server` (контейнер `main`) и инициализация
-модели [TinyLlama-1.1B-q4_0.gguf](https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/tree/main),
-которая была заранее загружена в директорию `./models`, расположенную на одном уровне с `docker-compose.yml`. Директория
-`./models` в свою очередь монтируется внутрь контейнера `main` и доступна по пути `/app/models`.
+In this example, `llama-server` (container `main`) is launched and the
+model [TinyLlama-1.1B-q4_0.gguf](https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/tree/main), which was
+previously downloaded to the `./models` directory located at the same level as `docker-compose.yml`, is initialized. The
+`./models` directory is then mounted inside the `main` container and is available at the path `/app/models`.
 
 ```yaml
 version: "3.9"
@@ -55,11 +63,11 @@ services:
     volumes:
       - ./models:/app/models
     environment:
-      # Режим работы (RPC-клиент в формате API-сервера)
+      # Operation mode (RPC client in API server format)
       APP_MODE: server
-      # Путь до весов, предварительно загруженной модели, внутри контейнера
+      # Path to the model weights, preloaded inside the container
       APP_MODEL: /app/models/TinyLlama-1.1B-q4_0.gguf
-      # Адреса RPC-серверов с которыми будет взаимодействовать клиент
+      # Addresses of the RPC servers the client will interact with
       APP_RPC_BACKENDS: backend-cuda:50052,backend-cpu:50052
     ports:
       - "127.0.0.1:8080:8080"
@@ -68,18 +76,18 @@ services:
     image: evilfreelancer/llama.cpp-rpc:latest
     restart: unless-stopped
     environment:
-      # Режим работы (RPC-сервер)
+      # Operation mode (RPC server)
       APP_MODE: backend
-      # Количество доступной RPC-серверу системной оперативной памяти (в Мегабайтах)
+      # Amount of system RAM available to the RPC server (in Megabytes)
       APP_MEM: 2048
 
   backend-cuda:
     image: evilfreelancer/llama.cpp-rpc:latest-cuda
     restart: "unless-stopped"
     environment:
-      # Режим работы (RPC-сервер)
+      # Operation mode (RPC server)
       APP_MODE: backend
-      # Количество доступной RPC-серверу оперативной памяти видеокарты (в Мегабайтах)
+      # Amount of GPU memory available to the RPC server (in Megabytes)
       APP_MEM: 1024
     deploy:
       resources:
@@ -90,13 +98,13 @@ services:
               capabilities: [ gpu ]
 ```
 
-Полный пример в [docker-compose.dist.yml](./docker-compose.dist.yml).
+A complete example is available in [docker-compose.dist.yml](./docker-compose.dist.yml).
 
-В результате чего у нас получается следующего вида схема:
+As a result, we obtain the following diagram:
 
 ![schema-example](./assets/schema-example.png)
 
-После её запуска можно будет делать такого вида HTTP запросы:
+Once launched, you can make HTTP requests like this:
 
 ```shell
 curl \
@@ -106,38 +114,54 @@ curl \
     --data '{"prompt": "Building a website can be done in 10 simple steps:"}'
 ```
 
-## Ручная сборка через Docker
+## Building and Deploying
 
-Сборка контейнеров в режиме CPU-only:
+### Automated Build Script
 
-```shell
-docker build ./llama.cpp/
-```
-
-Сборка контейнера под CUDA:
+Use the included `build.sh` script to build and push both CPU and CUDA images to your local registry:
 
 ```shell
-docker build ./llama.cpp/ --file ./llama.cpp/Dockerfile.cuda
+# Build and push using version from version.txt (default: v0.0.1)
+./build.sh
+
+# Build and push with custom version tag
+./build.sh v1.0.0
 ```
 
-При помощи аргумента сборки `LLAMACPP_VERSION` можно указать версию тега, название ветки или хеш коммита из которого
-требуется выполнить сборку контейнера, по умолчанию в контейнере указана ветка `master`.
+The script will:
+- Build CPU image: `registry.local.wallacearizona.us/llama.cpp-rpc:<tag>`
+- Build CUDA image: `registry.local.wallacearizona.us/llama.cpp-rpc:<tag>-cuda`
+- Push both images to the registry
+- Use `--no-cache --pull` to ensure fresh builds
+
+### Manual Docker Build
+
+Building containers in CPU-only mode:
 
 ```shell
-# Собрать контейнер из тега https://github.com/ggerganov/llama.cpp/releases/tag/b3700
-docker build ./llama.cpp/ --build-arg LLAMACPP_VERSION=b5480
+docker build --no-cache --pull -t llama-cpu -f llama.cpp/Dockerfile .
 ```
+
+Building the container for CUDA:
 
 ```shell
-# Собрать контейнер из ветки master
-docker build ./llama.cpp/ --build-arg LLAMACPP_VERSION=master
-# или просто
-docker build ./llama.cpp/
+docker build --no-cache --pull -t llama-cuda -f llama.cpp/Dockerfile.cuda .
 ```
 
-## Ручная сборка через Docker Compose
+Using the build argument `LLAMACPP_VERSION`, you can specify the tag version, branch name, or commit hash to build the
+container from. By default, the `master` branch is specified in the container.
 
-Пример `docker-compose.yml` который выполняет сборку образа с явным указанием тега.
+```shell
+# Build the container from a specific llama.cpp tag
+docker build -f llama.cpp/Dockerfile --build-arg LLAMACPP_VERSION=b3700 .
+
+# Build from master branch (default)
+docker build -f llama.cpp/Dockerfile .
+```
+
+## Manual Build Using Docker Compose
+
+An example of docker-compose.yml that performs image building with an explicit tag specification:
 
 ```yaml
 version: "3.9"
@@ -149,7 +173,7 @@ services:
     build:
       context: ./llama.cpp
       args:
-        - LLAMACPP_VERSION=b5480
+        - LLAMACPP_VERSION=b3700
     volumes:
       - ./models:/app/models
     environment:
@@ -162,42 +186,36 @@ services:
     build:
       context: ./llama.cpp
       args:
-        - LLAMACPP_VERSION=b5480
+        - LLAMACPP_VERSION=b3700
     environment:
       APP_MODE: backend
     ports:
       - "50052:50052"
 ```
 
-## Ссылки
+## Version Management
 
-- https://github.com/ggerganov/ggml/pull/761
-- https://github.com/ggerganov/llama.cpp/issues/7293
-- https://github.com/ggerganov/llama.cpp/pull/6829
-- https://github.com/ggerganov/llama.cpp/tree/master/examples/rpc
-- https://github.com/mudler/LocalAI/commit/fdb45153fed10d8a2c775633e952fdf02de60461
-- https://github.com/mudler/LocalAI/pull/2324
-- https://github.com/ollama/ollama/issues/4643
+The current version is tracked in `version.txt`. Update this file when releasing new versions:
 
-## Лицензия
-
-Этот проект лицензирован на условиях лицензии MIT. Подробности в файле [LICENSE](./LICENSE).
-
-## Цитирование
-
-Если вы используете этот проект в своих исследованиях или работе, пожалуйста, укажите ссылку на него следующим образом:
-
-```text
-[Pavel Rykov]. (2024). llama.cpp RPC-server in Docker. GitHub. https://github.com/EvilFreelancer/docker-llama.cpp-rpc
+```shell
+echo "v0.0.2" > version.txt
+./build.sh  # Automatically uses version from file
 ```
 
-Альтернатива в формате BibTeX:
+## Links
 
-```text
-@misc{pavelrykov2024llamacpprpc,
-  author = {Pavel Rykov},
-  title  = {llama.cpp RPC-server in Docker},
-  year   = {2024},
-  url    = {https://github.com/EvilFreelancer/docker-llama.cpp-rpc}
-}
-```
+- Original project: https://github.com/EvilFreelancer/docker-llama.cpp-rpc
+- llama.cpp RPC: https://github.com/ggerganov/llama.cpp/tree/master/examples/rpc
+- llama.cpp repo: https://github.com/ggerganov/llama.cpp
+- Related discussions:
+  - https://github.com/ggerganov/ggml/pull/761
+  - https://github.com/ggerganov/llama.cpp/issues/7293
+  - https://github.com/ggerganov/llama.cpp/pull/6829
+  - https://github.com/mudler/LocalAI/pull/2324
+  - https://github.com/ollama/ollama/issues/4643
+
+## Credits
+
+Original project by [Pavel Rykov](https://github.com/EvilFreelancer) (2024).
+
+This fork maintained by brydenver2 with modifications for OpenBLAS support and local registry deployment.

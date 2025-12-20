@@ -27,7 +27,6 @@ if [ "$APP_MODE" = "backend" ]; then
     CMD="/app/rpc-server"
     CMD+=" --host $APP_BIND"
     CMD+=" --port $APP_PORT"
-    CMD+=" --mem $APP_MEM"
     CMD+=" --threads $APP_THREADS"
     [ -n "$APP_DEVICE" ] && CMD+=" --device $APP_DEVICE"
     [ "$APP_CACHE" = "true" ] && CMD+=" --cache"

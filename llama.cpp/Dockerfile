@@ -1,5 +1,6 @@
 FROM ubuntu:24.04 AS builder
 WORKDIR /app
+COPY llama.cpp/patches /tmp/patches
 
 ARG LLAMACPP_REPO="https://github.com/ggerganov/llama.cpp.git"
 # It may be name of branch, tag or commit hash
@@ -19,9 +20,17 @@ RUN set -xe \
  && find /usr -name "*mkl*" -delete 2>/dev/null || true \
  && apt clean
 
-# Clone repo
+# Clone repo and apply local patches
 RUN set -xe \
- && git clone --branch "$LLAMACPP_VERSION" --depth 1 "$LLAMACPP_REPO"
+ && git clone --branch "$LLAMACPP_VERSION" --depth 1 "$LLAMACPP_REPO" \
+ && cd llama.cpp \
+ && if [ -d /tmp/patches ]; then \
+		for patch in /tmp/patches/*.patch; do \
+			[ -f "${patch}" ] || continue; \
+			echo "Applying ${patch##*/}"; \
+			git apply "${patch}"; \
+		done; \
+	fi
 
 # Build binaries
 WORKDIR /app/llama.cpp

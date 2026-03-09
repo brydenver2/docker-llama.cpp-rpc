@@ -1,5 +1,17 @@
 version: "3.9"
 
+x-build-cpu: &build-cpu
+  context: .
+  dockerfile: llama.cpp/Dockerfile
+  args:
+    LLAMACPP_VERSION: master
+
+x-build-cuda: &build-cuda
+  context: .
+  dockerfile: llama.cpp/Dockerfile.cuda
+  args:
+    LLAMACPP_VERSION: master
+
 x-shared-logs: &shared-logs
   logging:
     driver: "json-file"
@@ -19,53 +31,47 @@ x-shared-deploy: &shared-deploy
 services:
 
   main:
-    image: evilfreelancer/llama.cpp-rpc:latest
+    build: *build-cpu
     restart: "unless-stopped"
-    #build:
-    #  context: ./llama.cpp
-    #  args:
-    #    - LLAMACPP_VERSION=b5480
     volumes:
-      - ./models:/app/models
-    environment:
-      # Режим работы (RPC-клиент в формате API-сервера)
+      - ./models:/app/router-models
+      - ./router-cache:/root/.cache/llama.cpp
+      environment:
+        # Mode (RPC client exposing API server)
       APP_MODE: server
-      # Путь до весов, предварительно загруженной модели, внутри контейнера
-      APP_MODEL: /app/models/TinyLlama-1.1B-q4_0.gguf
-      # Адреса RPC-серверов с которыми будет взаимодействовать клиент
+        # Router mode for multi-model switching without restarts
+      APP_ROUTER_MODE: "true"
+        # Directory containing GGUF models for the router
+      APP_MODELS_DIR: /app/router-models
+        # Maximum number of models loaded at once
+      APP_MODELS_MAX: 4
+        # Autoload models upon first request
+      APP_MODELS_AUTOLOAD: "true"
+        # RPC backends the client connects to
       APP_RPC_BACKENDS: backend-cuda:50052,backend-cpu:50052
     ports:
       - "127.0.0.1:8080:8080"
     <<: *shared-logs
 
   backend-cpu:
-    image: evilfreelancer/llama.cpp-rpc:latest
+    build: *build-cpu
     restart: "unless-stopped"
-    #build:
-    #  context: ./llama.cpp
-    #  args:
-    #    - LLAMACPP_VERSION=b5480
-    environment:
-      # Режим работы (RPC-сервер)
+      environment:
+        # Mode (RPC server)
       APP_MODE: backend
-      # Количество доступной RPC-серверу системной оперативной памяти (в Мегабайтах)
+        # System RAM reserved for the RPC server (MB)
       APP_MEM: 2048
     ports:
       - "127.0.0.1:50152:50052"
     <<: *shared-logs
 
   backend-cuda:
-    image: evilfreelancer/llama.cpp-rpc:latest-cuda
+    build: *build-cuda
     restart: "unless-stopped"
-    #build:
-    #  context: ./llama.cpp
-    #  dockerfile: Dockerfile.cuda
-    #  args:
-    #    - LLAMACPP_VERSION=b5480
-    environment:
-      # Режим работы (RPC-сервер)
+      environment:
+        # Mode (RPC server)
       APP_MODE: backend
-      # Количество доступной RPC-серверу оперативной памяти видеокарты (в Мегабайтах)
+        # GPU memory reserved for the RPC server (MB)
       APP_MEM: 1024
     ports:
       - "127.0.0.1:50252:50052"

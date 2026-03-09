@@ -1,5 +1,5 @@
-ARG UBUNTU_VERSION=24.04
-ARG CUDA_VERSION=12.6.3
+ARG UBUNTU_VERSION=22.04
+ARG CUDA_VERSION=12.4.1
 ARG BASE_CUDA_DEVEL_CONTAINER=nvidia/cuda:${CUDA_VERSION}-devel-ubuntu${UBUNTU_VERSION}
 ARG BASE_CUDA_RUNTIME_CONTAINER=nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION}
 
@@ -20,41 +20,63 @@ ARG LLAMACPP_VERSION="master"
 #RUN set -xe \
 # && sed -r 's#developer.download.nvidia.com#mirror.yandex.ru/mirrors/developer.download.nvidia.com#g' -i /etc/apt/sources.list.d/cuda-ubuntu2204-x86_64.list
 
-# Install dependencies (no MKL/BLAS in builder)
+# Install all dependencies and clone repo in one layer (no MKL/BLAS in builder)
 RUN set -xe \
  && apt update -q \
  && apt install -fyq bash wget git cmake make g++ curl libcurl4-openssl-dev pkg-config \
  && apt remove -y intel-oneapi-mkl* 2>/dev/null || true \
- && apt clean
-
-# Clone repo
-RUN set -xe \
  && git clone --branch "$LLAMACPP_VERSION" --depth 1 "$LLAMACPP_REPO"
+
+# Copy patches and apply them (separate layer for better caching)
+COPY llama.cpp/patches /tmp/patches
+RUN set -xe \
+ && cd llama.cpp \
+ && if [ -d /tmp/patches ]; then \
+		for patch in /tmp/patches/*.patch; do \
+			[ -f "${patch}" ] || continue; \
+			echo "Applying ${patch##*/}"; \
+			git apply "${patch}"; \
+		done; \
+	fi
 
 # Build binaries
 WORKDIR /app/llama.cpp
 RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1
 RUN set -xe \
  && export LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs/:$LD_LIBRARY_PATH \
- && cmake -B build -DGGML_CUDA=ON -DGGML_RPC=ON -DGGML_BLAS=OFF -DGGML_MKL=OFF -DCMAKE_BUILD_RPATH_USE_ORIGIN=ON \
+ && cmake -B build -DGGML_CUDA=ON -DGGML_RPC=ON -DGGML_BLAS=OFF -DGGML_MKL=OFF -DCMAKE_BUILD_RPATH_USE_ORIGIN=ON -DCMAKE_CUDA_ARCHITECTURES="61;70;75;80;86;89;90" \
  && cmake --build build --config Release -j$(nproc)
 
+# Stage the subset of CUDA runtime libraries needed for execution
+RUN set -xe \
+ && mkdir -p /opt/cuda-libs/lib64 \
+ && cp -a /usr/local/cuda/lib64/libcudart.so* /opt/cuda-libs/lib64/ \
+ && cp -a /usr/local/cuda/lib64/libcublas.so* /opt/cuda-libs/lib64/ \
+ && cp -a /usr/local/cuda/lib64/libcublasLt.so* /opt/cuda-libs/lib64/
 
-FROM ${BASE_CUDA_RUNTIME_CONTAINER}
+ARG UBUNTU_VERSION
+FROM ubuntu:${UBUNTU_VERSION}
 WORKDIR /app
 
 # Install basic dependencies and OpenBLAS runtime
 RUN set -xe \
  && apt update -q \
- && apt install -fyq libgomp1 curl libopenblas0 netcat-openbsd wget \
- && apt clean
+ && apt install -fyq libgomp1 curl libopenblas0 netcat-openbsd wget ca-certificates
 
-# Create folders
+# Prepare application and CUDA runtime directories
 RUN set -xe \
- && mkdir -pv /app/models
+ && mkdir -pv /app/models /usr/local/cuda/lib64
+
+# Copy the CUDA runtime libraries extracted from the builder image
+COPY --from=builder /opt/cuda-libs/lib64/ /usr/local/cuda/lib64/
+
+# Ensure the dynamic loader can discover the CUDA libs
+RUN set -xe \
+ && printf '/usr/local/cuda/lib64\n' > /etc/ld.so.conf.d/cuda.conf \
+ && ldconfig
 
 # Copy compiled tools
-COPY --from=builder /app/llama.cpp/build/bin/*.so /usr/lib/x86_64-linux-gnu
+COPY --from=builder /app/llama.cpp/build/bin/*.so /usr/lib/x86_64-linux-gnu/
 COPY --from=builder /app/llama.cpp/build/bin/libmtmd.so.0 /usr/lib/x86_64-linux-gnu/
 COPY --from=builder /app/llama.cpp/build/bin/rpc-server .
 COPY --from=builder /app/llama.cpp/build/bin/llama-cli .

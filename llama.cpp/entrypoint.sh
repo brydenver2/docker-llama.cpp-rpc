@@ -2,6 +2,27 @@
 
 cd "$(dirname "$0")"
 
+wait_for_backends() {
+    local backends="$1"
+    [ "$APP_MODE" = "server" ] || return 0
+    [ -z "$backends" ] && return 0
+    echo "\n[startup] waiting for RPC backends: $backends"
+    for target in ${backends//,/ }; do
+        local host="${target%%:*}"
+        local port="${target##*:}"
+        if [ -z "$host" ] || [ -z "$port" ]; then
+            echo "[startup] skipping malformed backend entry: $target"
+            continue
+        fi
+        echo "[startup] waiting for $host:$port"
+        until nc -z "$host" "$port"; do
+            sleep 5
+        done
+        echo "[startup] $host:$port is reachable"
+    done
+    echo "[startup] all RPC backends reachable"
+}
+
 # If arguments passed to the script — treat them as custom command
 if [ "$#" -gt 0 ]; then
     echo && echo "Custom CMD detected, executing: $*" && echo
@@ -13,6 +34,10 @@ fi
 [ "x$APP_BIND" = "x" ] && export APP_BIND="0.0.0.0"
 [ "x$APP_MEM" = "x" ] && export APP_MEM="1024"
 [ "x$APP_MODEL" = "x" ] && export APP_MODEL="/app/models/TinyLlama-1.1B-q4_0.gguf"
+[ "x$APP_ROUTER_MODE" = "x" ] && export APP_ROUTER_MODE="false"
+[ "x$APP_MODELS_DIR" = "x" ] && export APP_MODELS_DIR="/app/models"
+[ "x$APP_MODELS_MAX" = "x" ] && unset APP_MODELS_MAX
+[ "x$APP_MODELS_AUTOLOAD" = "x" ] && export APP_MODELS_AUTOLOAD="true"
 [ "x$APP_REPEAT_PENALTY" = "x" ] && export APP_REPEAT_PENALTY="1.0"
 [ "x$APP_GPU_LAYERS" = "x" ] && export APP_GPU_LAYERS="99"
 [ "x$APP_THREADS" = "x" ] && export APP_THREADS="16"
@@ -36,10 +61,19 @@ elif [ "$APP_MODE" = "server" ]; then
     CMD="/app/llama-server"
     CMD+=" --host $APP_BIND"
     CMD+=" --port $APP_PORT"
-    CMD+=" --model $APP_MODEL"
+    if [ "$APP_ROUTER_MODE" = "true" ]; then
+        [ -n "$APP_MODELS_DIR" ] && CMD+=" --models-dir $APP_MODELS_DIR"
+        [ -n "$APP_MODELS_MAX" ] && CMD+=" --models-max $APP_MODELS_MAX"
+        [ "$APP_MODELS_AUTOLOAD" = "false" ] && CMD+=" --no-models-autoload"
+    else
+        CMD+=" --model $APP_MODEL"
+    fi
     CMD+=" --repeat-penalty $APP_REPEAT_PENALTY"
     CMD+=" --gpu-layers $APP_GPU_LAYERS"
-    [ -n "$APP_RPC_BACKENDS" ] && CMD+=" --rpc $APP_RPC_BACKENDS"
+    if [ -n "$APP_RPC_BACKENDS" ]; then
+        wait_for_backends "$APP_RPC_BACKENDS"
+        CMD+=" --rpc $APP_RPC_BACKENDS"
+    fi
     [ "$APP_EMBEDDING" = "true" ] && CMD+=" --embedding"
 elif [ "$APP_MODE" = "none" ]; then
     # For cases when you want to use /app/llama-cli

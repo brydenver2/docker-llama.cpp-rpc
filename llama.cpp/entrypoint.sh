@@ -44,6 +44,8 @@ fi
 [ "x$APP_DEVICE" = "x" ] && unset APP_DEVICE
 [ "x$APP_CACHE" = "x" ] && export APP_CACHE="false"
 [ "x$APP_EMBEDDING" = "x" ] && export APP_EMBEDDING="false"
+[ "x$APP_CTX_SIZE" = "x" ] && unset APP_CTX_SIZE
+[ "x$APP_NO_WARMUP" = "x" ] && export APP_NO_WARMUP="false"
 
 # Construct the command with the options
 if [ "$APP_MODE" = "backend" ]; then
@@ -74,6 +76,8 @@ elif [ "$APP_MODE" = "server" ]; then
         wait_for_backends "$APP_RPC_BACKENDS"
         CMD+=" --rpc $APP_RPC_BACKENDS"
     fi
+    [ -n "$APP_CTX_SIZE" ] && CMD+=" --ctx-size $APP_CTX_SIZE"
+    [ "$APP_NO_WARMUP" = "true" ] && CMD+=" --no-warmup"
     [ "$APP_EMBEDDING" = "true" ] && CMD+=" --embedding"
 elif [ "$APP_MODE" = "none" ]; then
     # For cases when you want to use /app/llama-cli

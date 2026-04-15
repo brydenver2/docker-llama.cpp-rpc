@@ -36,7 +36,7 @@ services:
     volumes:
       - ./models:/app/router-models
       - ./router-cache:/root/.cache/llama.cpp
-      environment:
+    environment:
         # Mode (RPC client exposing API server)
       APP_MODE: server
         # Router mode for multi-model switching without restarts
@@ -56,7 +56,7 @@ services:
   backend-cpu:
     build: *build-cpu
     restart: "unless-stopped"
-      environment:
+    environment:
         # Mode (RPC server)
       APP_MODE: backend
         # System RAM reserved for the RPC server (MB)
@@ -68,7 +68,7 @@ services:
   backend-cuda:
     build: *build-cuda
     restart: "unless-stopped"
-      environment:
+    environment:
         # Mode (RPC server)
       APP_MODE: backend
         # GPU memory reserved for the RPC server (MB)

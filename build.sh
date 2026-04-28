@@ -11,7 +11,7 @@ else
   TAG=${1:-latest}
 fi
 
-REGISTRY=registry.local.wallacearizona.us
+REGISTRY=registry.loc.wallacearizona.us
 IMAGE_BASE="$REGISTRY/llama.cpp-rpc"
 
 cpu_img="${IMAGE_BASE}:${TAG}"

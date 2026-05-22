@@ -49,6 +49,21 @@ services:
       APP_MODELS_AUTOLOAD: "true"
         # RPC backends the client connects to
       APP_RPC_BACKENDS: backend-cuda:50052,backend-cpu:50052
+        # Optional server-mode tunables (uncomment to override defaults)
+      # APP_REPEAT_PENALTY: "1.0"   # Repetition penalty
+      # APP_GPU_LAYERS: 99           # Layers offloaded to GPU backend
+      # APP_CTX_SIZE: 8192           # Context window size in tokens
+      # APP_PARALLEL: 4             # Parallel inference slots
+      # APP_FLASH_ATTN: "true"      # Flash attention (recommended for ctx >= 4096)
+      # APP_CACHE_TYPE_K: q8_0      # Quantise K-cache (halves KV VRAM)
+      # APP_CACHE_TYPE_V: q8_0      # Quantise V-cache
+      # --- MTP speculative decoding (requires MTP-enabled GGUF, e.g. Qwen3.6-MTP) ---
+      # APP_SPEC_TYPE: draft-mtp    # Enable MTP; use 'draft-mtp,ngram-mod' to chain with ngram
+      # APP_SPEC_DRAFT_N_MAX: 3     # Draft tokens per step (default 3)
+      # APP_SPEC_DRAFT_P_MIN: "0.0" # Min draft probability (0.0 = accept all; raise to filter weak drafts)
+      # APP_NO_MMPROJ: "true"       # Disable vision projector on MTP GGUFs (saves ~200-400 MB)
+      # APP_NO_WARMUP: "false"       # Set to "true" to skip model warm-up
+      # APP_EMBEDDING: "false"       # Set to "true" to enable embedding endpoint
     ports:
       - "127.0.0.1:8080:8080"
     <<: *shared-logs
@@ -61,6 +76,10 @@ services:
       APP_MODE: backend
         # System RAM reserved for the RPC server (MB)
       APP_MEM: 2048
+        # Optional backend tunables (uncomment to override defaults)
+      # APP_THREADS: 16              # CPU threads for the RPC server
+      # APP_DEVICE: ""               # Accelerator device name (omit for default)
+      # APP_CACHE: "false"           # Set to "true" to enable persistent KV-cache
     ports:
       - "127.0.0.1:50152:50052"
     <<: *shared-logs
@@ -73,6 +92,10 @@ services:
       APP_MODE: backend
         # GPU memory reserved for the RPC server (MB)
       APP_MEM: 1024
+        # Optional backend tunables (uncomment to override defaults)
+      # APP_THREADS: 16              # CPU threads for the RPC server
+      # APP_DEVICE: ""               # Specific CUDA device name (omit for default)
+      # APP_CACHE: "false"           # Set to "true" to enable persistent KV-cache
     ports:
       - "127.0.0.1:50252:50052"
     <<: *shared-deploy

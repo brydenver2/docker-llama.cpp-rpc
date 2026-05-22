@@ -45,6 +45,20 @@ Unfortunately, CUDA builds for arm64 fail due to an error, so they are temporari
 | APP_MODEL          | /app/models/TinyLlama-1.1B-q4_0.gguf       | Path to the model weights inside the container                                                   | 
 | APP_REPEAT_PENALTY | 1.0                                        | Repeat penalty                                                                                   |
 | APP_GPU_LAYERS     | 99                                         | Number of layers offloaded to the backend                                                        |
+| APP_SPEC_TYPE      | unset                                      | Speculative decoding type(s), e.g. `draft-mtp` or `draft-mtp,ngram-mod` (`--spec-type`)        |
+| APP_SPEC_DRAFT_N_MAX | unset                                    | Max speculative draft tokens per step, e.g. `3` (`--spec-draft-n-max`; server mode)            |
+| APP_SPEC_DRAFT_P_MIN | unset                                    | Min draft token probability threshold, e.g. `0.0` (`--spec-draft-p-min`; server mode)          |
+| APP_NO_MMPROJ      | false                                      | Pass `--no-mmproj` to skip loading the vision projector (saves VRAM on MTP GGUFs)             |
+| APP_PARALLEL       | 1                                          | Number of parallel inference slots (`--parallel`)                                               |
+| APP_FLASH_ATTN     | false                                      | Enable flash attention (`--flash-attn`); recommended for context ≥ 4 096 (server mode)         |
+| APP_CACHE_TYPE_K   | unset                                      | KV K-cache quantisation type, e.g. `q8_0` or `q4_0` (`--cache-type-k`, server mode)           |
+| APP_CACHE_TYPE_V   | unset                                      | KV V-cache quantisation type, e.g. `q8_0` or `q4_0` (`--cache-type-v`, server mode)           |
+| APP_THREADS        | 16                                         | Number of CPU threads for the RPC backend server                                                 |
+| APP_DEVICE         | unset                                      | GPU/accelerator device name passed to `--device` (backend mode; omit to use default device)     |
+| APP_CACHE          | false                                      | Enable persistent KV-cache on the RPC backend (`--cache` flag)                                  |
+| APP_EMBEDDING      | false                                      | Enable the embedding endpoint on the API server (`--embedding` flag, server mode)               |
+| APP_CTX_SIZE       | unset                                      | Context window size in tokens passed to `--ctx-size` (server mode; omit to use model default)   |
+| APP_NO_WARMUP      | false                                      | Skip model warm-up on API server startup (`--no-warmup` flag, server mode)                      |
 | APP_ROUTER_MODE    | false                                      | Enable llama.cpp router mode (omit `--model` and route by request `model` field)                  |
 | APP_MODELS_DIR     | /app/models                                | Directory scanned for GGUF files when router mode is enabled                                     |
 | APP_MODELS_MAX     | unset                                      | Maximum simultaneously loaded models before router performs LRU eviction                         |

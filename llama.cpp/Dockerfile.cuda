@@ -23,8 +23,7 @@ WORKDIR /app
 # Clone repo (separate layer - only rebuilds when version changes)
 RUN git clone --branch "$LLAMACPP_VERSION" --depth 1 --single-branch "$LLAMACPP_REPO"
 
-# Copy and apply patches
-COPY llama.cpp/patches /tmp/patches
+# Apply patches if any exist in the build context
 RUN cd llama.cpp && \
     if [ -d /tmp/patches ] && ls /tmp/patches/*.patch >/dev/null 2>&1; then \
         for patch in /tmp/patches/*.patch; do \
@@ -52,6 +51,7 @@ RUN mkdir -p /opt/staging/cuda-libs /opt/staging/bin /opt/staging/lib && \
     cp -a /usr/local/cuda/lib64/libcudart.so* /opt/staging/cuda-libs/ && \
     cp -a /usr/local/cuda/lib64/libcublas.so* /opt/staging/cuda-libs/ && \
     cp -a /usr/local/cuda/lib64/libcublasLt.so* /opt/staging/cuda-libs/ && \
+    (find /usr -name 'libnccl.so*' -exec cp -P {} /opt/staging/cuda-libs/ \; 2>/dev/null; true) && \
     cp build/bin/*.so /opt/staging/lib/ && \
     cp build/bin/rpc-server build/bin/llama-cli build/bin/llama-embedding build/bin/llama-server /opt/staging/bin/ && \
     if [ -f build/bin/libmtmd.so.0 ]; then cp build/bin/libmtmd.so.0 /opt/staging/lib/; fi

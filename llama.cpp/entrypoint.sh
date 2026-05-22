@@ -46,6 +46,17 @@ fi
 [ "x$APP_EMBEDDING" = "x" ] && export APP_EMBEDDING="false"
 [ "x$APP_CTX_SIZE" = "x" ] && unset APP_CTX_SIZE
 [ "x$APP_NO_WARMUP" = "x" ] && export APP_NO_WARMUP="false"
+[ "x$APP_PARALLEL" = "x" ] && export APP_PARALLEL="1"
+[ "x$APP_FLASH_ATTN" = "x" ] && export APP_FLASH_ATTN="false"
+[ "x$APP_CACHE_TYPE_K" = "x" ] && unset APP_CACHE_TYPE_K
+[ "x$APP_CACHE_TYPE_V" = "x" ] && unset APP_CACHE_TYPE_V
+[ "x$APP_SPEC_TYPE" = "x" ] && unset APP_SPEC_TYPE
+[ "x$APP_SPEC_DRAFT_N_MAX" = "x" ] && unset APP_SPEC_DRAFT_N_MAX
+[ "x$APP_SPEC_DRAFT_P_MIN" = "x" ] && unset APP_SPEC_DRAFT_P_MIN
+[ "x$APP_NO_MMPROJ" = "x" ] && export APP_NO_MMPROJ="false"
+[ "x$APP_KV_UNIFIED" = "x" ] && export APP_KV_UNIFIED="false"
+[ "x$APP_CACHE_RAM" = "x" ] && unset APP_CACHE_RAM
+[ "x$APP_TIMEOUT" = "x" ] && unset APP_TIMEOUT
 
 # Construct the command with the options
 if [ "$APP_MODE" = "backend" ]; then
@@ -79,6 +90,21 @@ elif [ "$APP_MODE" = "server" ]; then
     [ -n "$APP_CTX_SIZE" ] && CMD+=" --ctx-size $APP_CTX_SIZE"
     [ "$APP_NO_WARMUP" = "true" ] && CMD+=" --no-warmup"
     [ "$APP_EMBEDDING" = "true" ] && CMD+=" --embedding"
+    CMD+=" --parallel $APP_PARALLEL"
+    case "$APP_FLASH_ATTN" in
+        true|on)   CMD+=" --flash-attn on" ;;
+        off|false) CMD+=" --flash-attn off" ;;
+        auto)      CMD+=" --flash-attn auto" ;;
+    esac
+    [ -n "$APP_CACHE_TYPE_K" ] && CMD+=" --cache-type-k $APP_CACHE_TYPE_K"
+    [ -n "$APP_CACHE_TYPE_V" ] && CMD+=" --cache-type-v $APP_CACHE_TYPE_V"
+    [ -n "$APP_SPEC_TYPE" ] && CMD+=" --spec-type $APP_SPEC_TYPE"
+    [ -n "$APP_SPEC_DRAFT_N_MAX" ] && CMD+=" --spec-draft-n-max $APP_SPEC_DRAFT_N_MAX"
+    [ -n "$APP_SPEC_DRAFT_P_MIN" ] && CMD+=" --spec-draft-p-min $APP_SPEC_DRAFT_P_MIN"
+    [ "$APP_NO_MMPROJ" = "true" ] && CMD+=" --no-mmproj"
+    [ "$APP_KV_UNIFIED" = "true" ] && CMD+=" --kv-unified"
+    [ -n "$APP_CACHE_RAM" ] && CMD+=" --cache-ram $APP_CACHE_RAM"
+    [ -n "$APP_TIMEOUT" ] && CMD+=" --timeout $APP_TIMEOUT"
 elif [ "$APP_MODE" = "none" ]; then
     # For cases when you want to use /app/llama-cli
     echo "APP_MODE is set to none. Sleeping indefinitely."

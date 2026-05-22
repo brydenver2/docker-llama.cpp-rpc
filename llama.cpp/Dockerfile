@@ -1,6 +1,5 @@
 FROM ubuntu:24.04 AS builder
 WORKDIR /app
-COPY llama.cpp/patches /tmp/patches
 
 ARG LLAMACPP_REPO="https://github.com/ggerganov/llama.cpp.git"
 # It may be name of branch, tag or commit hash

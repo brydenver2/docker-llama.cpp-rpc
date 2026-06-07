@@ -44,6 +44,7 @@ fi
 [ "x$APP_DEVICE" = "x" ] && unset APP_DEVICE
 [ "x$APP_CACHE" = "x" ] && export APP_CACHE="false"
 [ "x$APP_EMBEDDING" = "x" ] && export APP_EMBEDDING="false"
+[ "x$APP_POOLING" = "x" ] && unset APP_POOLING
 [ "x$APP_CTX_SIZE" = "x" ] && unset APP_CTX_SIZE
 [ "x$APP_NO_WARMUP" = "x" ] && export APP_NO_WARMUP="false"
 [ "x$APP_PARALLEL" = "x" ] && export APP_PARALLEL="1"
@@ -57,6 +58,8 @@ fi
 [ "x$APP_KV_UNIFIED" = "x" ] && export APP_KV_UNIFIED="false"
 [ "x$APP_CACHE_RAM" = "x" ] && unset APP_CACHE_RAM
 [ "x$APP_TIMEOUT" = "x" ] && unset APP_TIMEOUT
+[ "x$APP_BATCH_SIZE" = "x" ] && unset APP_BATCH_SIZE
+[ "x$APP_UBATCH_SIZE" = "x" ] && unset APP_UBATCH_SIZE
 
 # Construct the command with the options
 if [ "$APP_MODE" = "backend" ]; then
@@ -88,8 +91,11 @@ elif [ "$APP_MODE" = "server" ]; then
         CMD+=" --rpc $APP_RPC_BACKENDS"
     fi
     [ -n "$APP_CTX_SIZE" ] && CMD+=" --ctx-size $APP_CTX_SIZE"
+    [ -n "$APP_BATCH_SIZE" ] && CMD+=" --batch-size $APP_BATCH_SIZE"
+    [ -n "$APP_UBATCH_SIZE" ] && CMD+=" --ubatch-size $APP_UBATCH_SIZE"
     [ "$APP_NO_WARMUP" = "true" ] && CMD+=" --no-warmup"
     [ "$APP_EMBEDDING" = "true" ] && CMD+=" --embedding"
+    [ -n "$APP_POOLING" ] && CMD+=" --pooling $APP_POOLING"
     CMD+=" --parallel $APP_PARALLEL"
     case "$APP_FLASH_ATTN" in
         true|on)   CMD+=" --flash-attn on" ;;
@@ -103,7 +109,9 @@ elif [ "$APP_MODE" = "server" ]; then
     [ -n "$APP_SPEC_DRAFT_P_MIN" ] && CMD+=" --spec-draft-p-min $APP_SPEC_DRAFT_P_MIN"
     [ "$APP_NO_MMPROJ" = "true" ] && CMD+=" --no-mmproj"
     [ "$APP_KV_UNIFIED" = "true" ] && CMD+=" --kv-unified"
-    [ -n "$APP_CACHE_RAM" ] && CMD+=" --cache-ram $APP_CACHE_RAM"
+    if [ -n "$APP_CACHE_RAM" ] && [ "$APP_CACHE_RAM" -gt 0 ] 2>/dev/null; then
+        CMD+=" --cache-ram $APP_CACHE_RAM"
+    fi
     [ -n "$APP_TIMEOUT" ] && CMD+=" --timeout $APP_TIMEOUT"
 elif [ "$APP_MODE" = "none" ]; then
     # For cases when you want to use /app/llama-cli

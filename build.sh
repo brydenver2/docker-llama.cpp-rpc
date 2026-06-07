@@ -5,6 +5,9 @@ set -euo pipefail
 # Usage: ./build.sh [tag]
 # Default tag: contents of version.txt (if present), else 'latest'
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+
 if [ -f version.txt ] && [ -z "${1:-}" ]; then
   TAG=$(tr -d '\n' < version.txt)
 else
